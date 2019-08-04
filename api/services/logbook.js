@@ -1,20 +1,11 @@
 const cheerio = require('cheerio');
+const moment = require('moment');
 const LogbookUtils = require('../utils/Logbook');
-const FLAG = {
-  HOME: 'Home',
-  LEARNING_PLAN: 'Learning Plan',
-  MONTHLY_REPORT: 'Monthly Report',
-  INSERT: 'Insert',
-  VIEW: 'View',
-  CHAT: 'Chat',
-  FORUM: 'Forum',
-  FEEDBACK: 'Feedback',
-  PROFILE: 'Profile',
-};
+const LOGBOOK = require('../constants/logbook');
 
 class Logbook {
   constructor() {
-    
+
   }
 
   async check(cookie) {
@@ -65,28 +56,105 @@ class Logbook {
   }
 
   async insert (cookie, clock_in, clock_out, activity, description) {
-    const logbook = new LogbookUtils();
-    logbook.jar = await this._setCookie(logbook, cookie);
-    const getInsert = await logbook.getInsert();
-    let $ = await cheerio.load(getInsert.body);
+    try {
+      const logbook = new LogbookUtils();
+      logbook.jar = await this._setCookie(logbook, cookie);
+      const getInsert = await logbook.getInsert();
+      let $ = await cheerio.load(getInsert.body);
+  
+      const _token = await $('.ui.form input').first().attr('value');
+  
+      const postInsert = await logbook.postInsert(_token, clock_in, clock_out, activity, description);
+      $ = await cheerio.load(postInsert.body);
+  
+      const successMessage = await $('.ui.success.message div.header').text().trim();
+  
+      if (successMessage) {
+        return {
+          message: successMessage,
+          error: false,
+        };
+      } else {
+        return {
+          message: 'failed',
+          error: true
+        };
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    const _token = await $('.ui.form input').first().attr('value');
+  async view (cookie) {
+    const view = {};
+    try {
+      const logbook = new LogbookUtils();
+      logbook.jar = await this._setCookie(logbook, cookie);
+      const getLogbook = await logbook.getLogbook();
+      let $ = await cheerio.load(getLogbook.body);
+  
+      const temp = [];
 
-    const postInsert = await logbook.postInsert(_token, clock_in, clock_out, activity, description);
-    $ = await cheerio.load(postInsert.body);
+      await $('tbody tr').each(function(index, elem) {
+        const date = (
+          $(elem).find('.date').text().trim()
+          && $(elem).find('.date').text().trim().split(' ')[1].replace(/\//g, '-')
+        ) || '';
+        const clock_in = $(elem).find('.clock-in').text().trim() || '';
+        const clock_out = $(elem).find('.clock-in').text().trim() || '';
+        const activity = $(elem).find('.activity').text().trim() || '';
+        const description = $(elem).find('.description').text().trim() || '';
+        const status = (
+          $(elem).find('td').eq(5).text().trim().split('\n')
+          || $(elem).find('td').eq(5).text().trim()
+        ) || '';
+        const link = (
+          $(elem).find('td a').attr('href')
+          && $(elem).find('td a').attr('href').trim()
+        ) || '';
+  
+        // Ambil logbook yang bisa di edit
+        const request = {};
+        request.method = $(elem).find('td form').attr('method') || '';
+        request.link = $(elem).find('td form').attr('action') || '';
+        request._token = $(elem).find('td form input').eq(0).attr('value') || '';
+        request.requested_date = $(elem).find('td form input').eq(1).attr('value') || '';
+        
+        // Buat pagination di front end
+        const month = moment(date, 'DD-MM-YYYY').format('MMMM');
 
-    const successMessage = await $('.ui.success.message div.header').text().trim();
+        // Cek soalnya keambil juga profile information yang ada di bawah view logbook
+        if (date) {
+          temp.push({
+            date,
+            clock_in,
+            clock_out,
+            activity,
+            description,
+            status,
+            link,
+            request,
+            month,
+          });
+        }
+      });
 
-    if (successMessage) {
-      return {
-        message: successMessage,
-        error: false,
-      };
-    } else {
-      return {
-        message: 'failed',
-        error: true
-      };
+      const listOfMonth = [ ...new Set(temp.map((t) => t.month)) ];
+
+      temp.forEach((t) => {
+        const month = listOfMonth.find((m) => m === t.month);
+        delete t.month;
+        
+        // Cek bulan itu sudah dibuatkan objectnya atau belom
+        if (!view[month]) {
+          view[month] = [];
+        }
+        view[month].push(t);
+      });
+
+      return view;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -94,17 +162,16 @@ class Logbook {
   async _setCookie (logbook, cookie) {
     let setCookie = cookie;
     const jar = logbook.jar;
-    jar.getCookies('https://industry.socs.binus.ac.id/learning-plan/');
+    jar.getCookies(LOGBOOK.BASE_URL);
     if (!(setCookie instanceof Array)) setCookie = [setCookie];
     setCookie.forEach( (cookie) => {
-      jar.setCookie(cookie, 'https://industry.socs.binus.ac.id/learning-plan/');
+      jar.setCookie(cookie, LOGBOOK.BASE_URL);
     });
     return jar;
   }
 
   async _check (flag) {
-    const flagList = Object.values(FLAG);
-    const result = flagList.find( (flagL) => flagL == flag);
+    const result = LOGBOOK.FLAG.find( (flagL) => flagL == flag);
     if (!result) return false;
     return true;
   }

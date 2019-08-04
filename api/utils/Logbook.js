@@ -1,6 +1,7 @@
 const Request = require('./Request');
+const LOGBOOK = require('../constants/logbook');
 const options = {
-  baseUrl: 'https://industry.socs.binus.ac.id/learning-plan',
+  baseUrl: LOGBOOK.BASE_URL,
 };
 
 class Logbook extends Request {
@@ -19,7 +20,7 @@ class Logbook extends Request {
 
   async getLogin() {
     try {
-      const response = await this.Get('/auth/login', { jar: this.jar });
+      const response = await this.Get(LOGBOOK.LOGIN, { jar: this.jar });
       return response;
     } catch (error) {
       throw error;
@@ -28,8 +29,7 @@ class Logbook extends Request {
 
   async postLogin(_token, username, password) {
     try {
-      const form = { _token, username, password };
-      const response = await this.Post('/auth/login', {
+      const response = await this.Post(LOGBOOK.LOGIN, {
         jar: this.jar,
         followAllRedirects: true,
         form: {
@@ -46,7 +46,7 @@ class Logbook extends Request {
 
   async getInsert() {
     try {
-      const response = await this.Get('/student/log-book/insert', { jar: this.jar });
+      const response = await this.Get(LOGBOOK.INSERT, { jar: this.jar });
       return response;
     } catch (error) {
       throw error;
@@ -55,7 +55,7 @@ class Logbook extends Request {
 
   async postInsert(_token, clock_in, clock_out, activity, description) {
     try {
-      const response = await this.Post('/student/log-book/insert', {
+      const response = await this.Post(LOGBOOK.INSERT, {
         jar: this.jar,
         followAllRedirects: true,
         form: {
@@ -72,6 +72,14 @@ class Logbook extends Request {
     }
   }
 
+  async getLogbook() {
+    try {
+      const response = await this.Get(LOGBOOK.VIEW, { jar: this.jar });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = Logbook;

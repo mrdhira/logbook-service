@@ -10,7 +10,7 @@ module.exports = {
         allowUnknown: true,
       },
       payload: {
-        nim: joi.string().length(10),
+        nim: joi.string().length(10).required(),
       },
     },
   },
@@ -40,6 +40,18 @@ module.exports = {
         clock_out: joi.string().required(),
         activity: joi.string().required(),
         description: joi.string().required(),
+      },
+    },
+  },
+  view: {
+    tags: ['logbook'],
+    handler: logbookControllers.view,
+    validate: {
+      options: {
+        allowUnknown: true,
+      },
+      query: {
+        nim: joi.string().length(10).required(),
       },
     },
   },
