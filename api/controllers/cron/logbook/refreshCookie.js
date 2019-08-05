@@ -45,8 +45,6 @@ const job = async () => {
   }
 };
 
-job();
-
 module.exports = {
   name,
   enable: true, /* Simple switch to enable/disable jobs */
