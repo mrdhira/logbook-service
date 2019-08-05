@@ -43,16 +43,18 @@ class User {
     }
   }
 
-  async update (id, options) {
+  async updateCookie (id, cookie) {
     const sqlTrx = await this.sql.transaction();
     try {
-      const update = await this.user.update({
-        ...options,
-      }, {
-        where: { id },
-      }, {
-        transaction: { sqlTrx },
-      });
+      const update = await this.user.update(
+        {
+          cookie: cookie,
+        }, {
+          where: { id },
+        }, {
+          transaction: { sqlTrx },
+        }
+      );
       await sqlTrx.commit();
       return update;
     } catch (error) {

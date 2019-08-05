@@ -44,9 +44,7 @@ const login = async (req, res) => {
       if (!user) {
         await userService.create(nim, password, JSON.stringify(login.data.cookie), {}, {});
       } else {
-        await userService.update(user.id, {
-          cookie: JSON.stringify(login.data.cookie),
-        });
+        await userService.updateCookie(user.id, JSON.stringify(login.data.cookie));
       }
       console.log('Response: ', Meta.LOGIN_SUCCESS);
       return res.response(Meta.LOGIN_SUCCESS).code(200);

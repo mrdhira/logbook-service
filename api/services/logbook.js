@@ -164,14 +164,18 @@ class Logbook {
 
   // Private
   _setCookie (logbook, cookie) {
-    let setCookie = cookie;
-    const jar = logbook.jar;
-    jar.getCookies(LOGBOOK.BASE_URL);
-    if (!(setCookie instanceof Array)) setCookie = [setCookie];
-    setCookie.forEach( (cookie) => {
-      jar.setCookie(cookie, LOGBOOK.BASE_URL);
-    });
-    return jar;
+    try {
+      let setCookie = cookie;
+      const jar = logbook.jar;
+      jar.getCookies(LOGBOOK.BASE_URL);
+      if (!(setCookie instanceof Array)) setCookie = [setCookie];
+      setCookie.forEach( (cookie) => {
+        jar.setCookie(cookie, LOGBOOK.BASE_URL);
+      });
+      return jar;
+    } catch (error) {
+      throw error;
+    }
   }
 
   _check (flag) {

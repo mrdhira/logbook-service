@@ -1,3 +1,4 @@
+const Promise = require('bluebird');
 const userService = require('../../../services/user');
 const logbookService = require('../../../services/logbook');
 
@@ -14,19 +15,27 @@ const name = 'Refresh User Cookie';
 const rule = '0 15 * * * *';
 const tz = 'Asia/Jakarta';
 
+const getAllUser = () => {
+  return userService
+    .findAll()
+    .then((users) => users.filter((user) => user.cookie));
+};
+
 /**
  * The job that will be run
  * @type {function}
  */
-const job = () => {
+const job = async () => {
   console.log(`CRON ${name} is running...`);
   try {
-    const users = await userService.findAll().filter((user) => user.cookie);
-    users.forEach((user) => {
+    const users = await getAllUser();
+
+    await Promise.mapSeries(users, async (user) => {
       console.log(`Refresh cookie for: ${user.username}`);
-      const cookie = await logbookService.check(JSON.parse(user.cookie));
-      await userService.update(user.id, { cookie: JSON.stringify(cookie) });
+      const check = await logbookService.check(JSON.parse(user.cookie));
+      await userService.updateCookie(user.id, JSON.stringify(check.cookie));
     });
+
     console.log(`CRON ${name} is finish...`);
     return 'SUCCESS';
   } catch (error) {
@@ -35,6 +44,8 @@ const job = () => {
     throw error;
   }
 };
+
+job();
 
 module.exports = {
   name,
