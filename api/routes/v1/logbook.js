@@ -18,6 +18,11 @@ module.exports = {
       path: '/insert',
       config: handlers.logbook.insert,
     },
+    {
+      method: 'GET',
+      path: '/view',
+      config: handlers.logbook.view,
+    },
     // Not Found
     {
       method: 'GET',

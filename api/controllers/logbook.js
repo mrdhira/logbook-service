@@ -56,6 +56,7 @@ const insert = async (req, res) => {
       if (insert.error) {
         return res.response(Meta.INSERT_FAILED).code(424);
       } else {
+        await userService.createLogbookHistory(nim, clock_in, clock_out, activity, description);
         return res.response(Meta.INSERT_SUCCESS(insert.message)).code(200);
       }
     }
@@ -65,8 +66,25 @@ const insert = async (req, res) => {
   }
 }
 
+const view = async (req, res) => {
+  const { nim } = req.query;
+  try {
+    const user = await userService.findOne({ where: { username: nim } });
+    if (!user) {
+      return res.response(Meta.USER_NOT_FOUND).code(401);
+    } else {
+      const logbook = await logbookService.view(JSON.parse(user.cookie));
+      return logbook;
+    }
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 module.exports = {
   check,
   login,
   insert,
+  view,
 };
