@@ -34,6 +34,15 @@ class User {
     }
   }
 
+  async findAll(options) {
+    try {
+      const users = await this.user.findAll({ ...options });
+      return users;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async update (id, options) {
     const sqlTrx = await this.sql.transaction();
     try {

@@ -17,7 +17,11 @@ class Logbook {
       const check = await this._check(
         $('.item.active').first().text()
       );
-      return check;
+      if (check) {
+        return { cookie: base.headers['set-cookie'] }
+      } else {
+        return check;
+      }
     } catch (error) {
       throw error;
     }
@@ -159,7 +163,7 @@ class Logbook {
   }
 
   // Private
-  async _setCookie (logbook, cookie) {
+  _setCookie (logbook, cookie) {
     let setCookie = cookie;
     const jar = logbook.jar;
     jar.getCookies(LOGBOOK.BASE_URL);
@@ -170,7 +174,7 @@ class Logbook {
     return jar;
   }
 
-  async _check (flag) {
+  _check (flag) {
     const result = LOGBOOK.FLAG.find( (flagL) => flagL == flag);
     if (!result) return false;
     return true;

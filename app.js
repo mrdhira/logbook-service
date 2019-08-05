@@ -1,12 +1,19 @@
+require('dotenv').config();
+
 const glue = require('@hapi/glue');
 const moment = require('moment');
 const { manifest } = require('./config/manifest');
+const cron = require('./api/controllers/cron');
 
 const start = async () => {
   try {
     const server = await glue.compose(manifest, {
       relativeTo: __dirname,
     });
+
+    if (process.env.ENABLE_CRON) {
+      await cron.start();
+    };
 
     // add logging on response
     server.events.on('response', (req, res) => {
