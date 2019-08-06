@@ -4,12 +4,13 @@ class User {
   constructor() {
     this.sql = models.sequelize;
     this.user = models.user;
+    this.logbook_history = models.insert_logbook_history;
   }
 
   async create (username, password, cookie, student_information = {}, employee_information = {}) {
     const sqlTrx = await this.sql.transaction();
     try {
-      const user = await this.user.create({
+      const create = await this.user.create({
         username,
         password,
         cookie,
@@ -17,10 +18,9 @@ class User {
         employee_information,
       });
       await sqlTrx.commit();
-      return user;
+      return create;
     } catch (error) {
       await sqlTrx.rollback();
-      console.log(error);
       throw error;
     }
   }
@@ -30,26 +30,53 @@ class User {
       const user = await this.user.findOne({ ...options });
       return user;
     } catch (error) {
-      console.log(error);
       throw error;
     }
   }
 
-  async update (id, options) {
+  async findAll(options) {
+    try {
+      const users = await this.user.findAll({ ...options });
+      return users;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateCookie (id, cookie) {
     const sqlTrx = await this.sql.transaction();
     try {
-      const user = await this.user.update({
-        ...options,
-      }, {
-        where: { id },
-      }, {
-        transaction: { sqlTrx },
-      });
+      const update = await this.user.update(
+        {
+          cookie: cookie,
+        }, {
+          where: { id },
+        }, {
+          transaction: { sqlTrx },
+        }
+      );
       await sqlTrx.commit();
-      return user;
+      return update;
     } catch (error) {
       await sqlTrx.rollback();
-      console.log(error);
+      throw error;
+    }
+  }
+
+  async createLogbookHistory(username, clock_in, clock_out, activity, description) {
+    const sqlTrx = await this.sql.transaction();
+    try {
+      const create = await this.logbook_history({
+        username,
+        clock_in,
+        clock_out,
+        activity,
+        description,
+      });
+      await sqlTrx.commit();
+      return create;
+    } catch (error) {
+      await sqlTrx.rollback();
       throw error;
     }
   }
